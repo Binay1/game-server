@@ -2,6 +2,7 @@ const socket_io = require('socket.io');
 const uuid = require('uuid');
 const io = socket_io();
 const lobby = io.of('/lobby');
+const createMaze = require('../helpers/createMaze');
 const id = require('../helpers/id');
 const socketByPlayerID = require('../helpers/socketByPlayerID');
 let playersInLobby= 0;
@@ -36,19 +37,19 @@ lobby.on("connection", (socket) => {
   createGame = (socket, friendSocket) => {
     const gameID = uuid.v4();
     const gameurl = "/game/" + encodeURIComponent(gameID);
+    let maze = createMaze();
     socket.emit("enterGame", {redirectTo: gameurl});
     friendSocket.emit("enterGame", {redirectTo: gameurl});
-    //socket.disconnect();
-    //friendSocket.disconnect();
     const game = io.of(gameurl);
     let playerCount = 0;
     game.on("connection", (player) =>{
       playerCount+=1;
       console.log(`Player ${playerCount} has entered the game`);
+      player.emit("setup", maze);
       player.on("disconnect", () => {
         console.log(`Player ${playerCount} has exited the game`);
         playerCount-=1;
-      })
+      });
     });
   }
 
