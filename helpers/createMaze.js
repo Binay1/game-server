@@ -1,12 +1,14 @@
-//Recursive back-tracker
+// Recursive back-tracker
 // Algo: https://en.wikipedia.org/wiki/Maze_generation_algorithm
 
-const _ = require('underscore');
+const _ = require('underscore'); // this library has a nice random function
+
 let current; // Current cell
 let stack = []; //keeps track of the path followed to create the maze
-let gridSize=40;
+let gridSize = 10;
 let grid = [gridSize];
 
+// Create grid 
 function setup() {
     for (let x = 0; x < gridSize; x++) { 
         grid[x] = new Array(gridSize); 
@@ -17,9 +19,10 @@ function setup() {
         }
     }
     // select random start location for the maze
-    current = grid[Math.floor(_.random(0, gridSize-1))][Math.floor(_.random(0, gridSize-1))]; 
+    current = grid[_.random(0, gridSize-1)][_.random(0, gridSize-1)]; 
 }
 
+// Repeatedly remove walls
 function mazify() {
     current.visited=true;
     let next = current.checkNeighbours();
@@ -33,7 +36,7 @@ function mazify() {
     }
 }
 
-// removes wall between two cells
+// Removes wall between two cells
 function removeWall(a, b) {
     if(a.xcoord-b.xcoord>0) { // a is to the right of b 
         a.walls[3] = false;
@@ -53,52 +56,108 @@ function removeWall(a, b) {
     }
 }
 
+// Create more paths through the maze by removing random walls
+function addPaths(extra) {
+    // Note: keep the wall removing away from outermost layer
+    // Would like to keep the maze perfectly square for symmetry's sake
+    for(let i=0;i<extra;i++) {
+        let cell = grid[_.random(0,gridSize-2)][_.random(0,gridSize-2)]
+        let neighbours = cell.getNeighbours();
+        let index = _.random(0,cell.walls.length-1);
+        let remove = cell.walls[index];
+        if(remove&&neighbours[index]) {
+            removeWall(cell, neighbours[index]);
+        }
+        else {
+            i-=1;
+        }
+    }
+}
+
+// Generate start positions for both players
+function generateStartPositions() {
+    let position1 = grid[_.random(0,gridSize-1)][_.random(0,gridSize-1)];
+    let position2 = grid[_.random(0,gridSize-1)][_.random(0,gridSize-1)];
+    while(position2==position1) {
+        position2 = grid[_.random(0,gridSize-1)][_.random(0,gridSize-1)];
+    }
+    return [position1, position2];
+}
+
+// This is the goal. This block will likely be of a different color
+function generateTarget(positions) {
+    let target = grid[_.random(0,gridSize-1)][_.random(0,gridSize-1)];
+    while(target!==positions[0]&&target!=positions[1]) {
+        target = grid[_.random(0,gridSize-1)][_.random(0,gridSize-1)];
+    }
+    return target;
+}
+
 // Cell constructor/definition/everything 
 function Cell(xcoord,zcoord) {
 
     this.xcoord = xcoord;
     this.zcoord = zcoord;
     this.walls = [true, true, true, true]; // top, right, bottom, left
-    this.visited=false;
+    this.visited = false;
 
-    // returns random neighbour
-    this.checkNeighbours = function() {
-        let neighbours = [];
-        let above = undefined;
-        let right = undefined;
-        let below = undefined;
-        let left = undefined;
+    this.getNeighbours = () => {
+        let allNeighbours = [];
         if(current.xcoord!==0) {
-            above = grid[current.xcoord-1][current.zcoord]; // cell above
+            allNeighbours[0] = grid[current.xcoord-1][current.zcoord]; // cell above
+        }
+        else {
+            allNeighbours[0] = undefined;
         }
         if(current.zcoord!==gridSize-1) {
-            right = grid[current.xcoord][current.zcoord+1]; // cell to right
+            allNeighbours[1] = grid[current.xcoord][current.zcoord+1]; // cell to right
+        }
+        else {
+            allNeighbours[1]=undefined;
         }
         if(current.xcoord!==gridSize-1) {
-            below = grid[current.xcoord+1][current.zcoord]; // cell below
+            allNeighbours[2] = grid[current.xcoord+1][current.zcoord]; // cell below
+        }
+        else {
+            allNeighbours[2]=undefined;
         }
         if(current.zcoord!==0) {
-            left = grid[current.xcoord][current.zcoord-1]; //cell to left
+            allNeighbours[3] = grid[current.xcoord][current.zcoord-1]; //cell to left
         }
+        else {
+            allNeighbours[3] = undefined;
+        }
+        return allNeighbours;
+    }
+
+    // returns random neighbour
+    this.checkNeighbours = () => {
+
+        let validNeighbours = [];
+        let allNeighbours = this.getNeighbours();
+        let above = allNeighbours[0];
+        let right = allNeighbours[1];
+        let below = allNeighbours[2];
+        let left = allNeighbours[3];
 
         // If the neighbour exists (not outside the range of the grid) and has not been visited,
         // add to the array
 
         if(above && !above.visited) {
-            neighbours.push(above);
+            validNeighbours.push(above);
         }
         if(right && !right.visited) {
-            neighbours.push(right);
+            validNeighbours.push(right);
         }
         if(below && !below.visited) {
-            neighbours.push(below);
+            validNeighbours.push(below);
         }
         if(left && !left.visited) {
-            neighbours.push(left);
+            validNeighbours.push(left);
         }
 
-        if(neighbours.length>0) {
-            return neighbours[Math.floor(_.random(0,neighbours.length-1))];
+        if(validNeighbours.length>0) {
+            return validNeighbours[_.random(0,validNeighbours.length-1)];
         }
         else {
             return undefined;
@@ -111,7 +170,26 @@ function main() {
     do{
         mazify();
     }while(stack.length!==0);
-    return grid;
+    addPaths(2); // remove a few extra walls for more paths
+    // Note: balancing conditions have to be added to startPositions and target
+    // Just keeping them random might be unfair
+    let startPositions = generateStartPositions(); // get startPositions for both players
+    let target = generateTarget(startPositions); // get the goal
+    // two objects, one for each player
+    return [
+        {
+            startPosition: startPositions[0],
+            target: target,
+            maze: grid,
+            opponentPosition: startPositions[1],
+        },
+        {
+            startPosition: startPositions[1],
+            target: target,
+            maze: grid,
+            opponentPosition: startPositions[0],
+        }
+    ];
 }
 
 module.exports=main;
