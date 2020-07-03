@@ -5,7 +5,7 @@ const _ = require('underscore'); // this library has a nice random function
 
 let current; // Current cell
 let stack = []; //keeps track of the path followed to create the maze
-let gridSize = 10;
+let gridSize = 20;
 let grid = [gridSize];
 
 // Create grid 
@@ -87,10 +87,35 @@ function generateStartPositions() {
 // This is the goal. This block will likely be of a different color
 function generateTarget(positions) {
     let target = grid[_.random(0,gridSize-1)][_.random(0,gridSize-1)];
-    while(target!==positions[0]&&target!=positions[1]) {
+    while(target===positions[0]||target===positions[1]) {
         target = grid[_.random(0,gridSize-1)][_.random(0,gridSize-1)];
     }
     return target;
+}
+
+function generateSpellBook(number, positions, target) {
+    let spellBook = [];
+    let restrictedPositions = [target,...positions];
+    let allSpells = [{name: "Speed", target:"self", duration:10},
+                    //{name: "Clarity", target:"self", duration:10},
+                    {name: "Freeze", target:"opp", duration:10},
+                    //{name: "Blind", target:"opp", duration:10}
+                ];
+    for(let m=0;m<number;m++) {
+        let location = grid[_.random(0,gridSize-1)][_.random(0,gridSize-1)];
+        while(restrictedPositions.indexOf(location)!==-1) {
+            location = grid[_.random(0,gridSize-1)][_.random(0,gridSize-1)];
+        }
+        restrictedPositions.push(location);
+        let randomSpell = allSpells[_.random(0,allSpells.length-1)];
+        spellBook[m] = {
+            spellName: randomSpell.name,
+            spellTarget: randomSpell.target,
+            spellDuration: randomSpell.duration,
+            position: location,
+        };
+    }
+    return spellBook;
 }
 
 // Cell constructor/definition/everything 
@@ -175,6 +200,7 @@ function main() {
     // Just keeping them random might be unfair
     let startPositions = generateStartPositions(); // get startPositions for both players
     let target = generateTarget(startPositions); // get the goal
+    let spellBook = generateSpellBook(8, startPositions, target);
     // two objects, one for each player
     return [
         {
@@ -182,12 +208,14 @@ function main() {
             target: target,
             maze: grid,
             opponentPosition: startPositions[1],
+            spellBook: spellBook,
         },
         {
             startPosition: startPositions[1],
             target: target,
             maze: grid,
             opponentPosition: startPositions[0],
+            spellBook: spellBook,
         }
     ];
 }

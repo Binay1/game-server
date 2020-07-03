@@ -6,28 +6,33 @@ const lobby = io.of('/lobby');
 const createMaze = require('../helpers/createMaze');
 const id = require('../helpers/id');
 const socketByPlayerID = require('../helpers/socketByPlayerID');
-let playersInLobby= 0;
+
+let playersInLobby = 0;
+//let matchMakingInProgress = false;
 
 // currently no way to opt out once you press "play now"
-// there are instances where only one player is sent into the game: Investigate
 function joinRandoms() {
-  let randoms;
-  if(lobby.adapter.rooms["randomRoom"]!==undefined) {
-    randoms = Object.keys(lobby.adapter.rooms["randomRoom"].sockets);
-    let players = randoms.length;
-    while(players>1) {
-      let player1 = lobby.connected[randoms[_.random(0,randoms.length-1)]];
-      player1.leave("randomRoom");
-      players-=1;
-      let player2 = lobby.connected[randoms[_.random(0,randoms.length-1)]];
-      player2.leave("randomRoom");
-      players-=1;
-      createGame(player1, player2);
+  //if(!matchMakingInProgress) {
+  // matchMakingInProgress=true;
+    if(lobby.adapter.rooms["randomRoom"]!==undefined) {
+      let randoms = Object.keys(lobby.adapter.rooms["randomRoom"].sockets);;
+      while(randoms.length>1) {
+        let player1 = lobby.connected[randoms[_.random(0,randoms.length-1)]];
+        player1.leave("randomRoom");
+        randoms = Object.keys(lobby.adapter.rooms["randomRoom"].sockets);
+        let player2 = lobby.connected[randoms[_.random(0,randoms.length-1)]];
+        player2.leave("randomRoom");
+        createGame(player1, player2);
+        if(randoms.length>1) {
+          randoms = Object.keys(lobby.adapter.rooms["randomRoom"].sockets);
+        }
+      }
     }
-  }
+    //matchMakingInProgress=false;
+  //}
 }
 
-setInterval(joinRandoms, 1000);
+setInterval(joinRandoms, 2000);
 
 // Handle lobby connect/disconnect
 lobby.on("connection", (socket) => {
@@ -48,21 +53,20 @@ lobby.on("connection", (socket) => {
   socket.on("reqFriend", (friendID) => {
     let friendSocketID = socketByPlayerID(lobby, friendID);
     if(friendSocketID === undefined) {
-      socket.emit("message", {msg: "Given player ID is invalid"});
+      socket.emit("message", "Given player ID is invalid");
     }
     else {
       // send private socket.io event to friend
       lobby.to(friendSocketID).emit("reqPlay",socket.playerID);
       let friendSocket = lobby.connected[friendSocketID];
       friendSocket.on("reject",  () => {
-        socket.emit("message", {msg: "Your challenge has been rejected"})
+        socket.emit("message", "Your challenge has been rejected")
       });
       friendSocket.on("accept", () => createGame(socket, friendSocket));
     }
   });
 
   createGame = (socket, opponent) => {
-    console.log("called");
     const gameID = uuid.v4();
     const gameurl = "/game/" + encodeURIComponent(gameID);
     let gameDetails = createMaze();
@@ -78,6 +82,12 @@ lobby.on("connection", (socket) => {
       }
       player.on("position", (newPos) => {
         player.broadcast.emit("opponentPosition", newPos);
+      });
+      player.on("spellCross", (spellID) => {
+        player.broadcast.emit("removeSpell", spellID);
+      });
+      player.on("fire", (shotDetails) => {
+        player.broadcast.emit("shotDetails",shotDetails);
       });
       console.log(`Player ${playerCount} has entered the game`);
       player.emit("setup", gameDetails[playerCount-1]);
