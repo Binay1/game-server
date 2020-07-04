@@ -5,7 +5,7 @@ const _ = require('underscore'); // this library has a nice random function
 
 let current; // Current cell
 let stack = []; //keeps track of the path followed to create the maze
-let gridSize = 10;
+let gridSize = 5;
 let grid = [gridSize];
 
 // Create grid 
