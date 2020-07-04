@@ -5,7 +5,7 @@ const _ = require('underscore'); // this library has a nice random function
 
 let current; // Current cell
 let stack = []; //keeps track of the path followed to create the maze
-let gridSize = 20;
+let gridSize = 10;
 let grid = [gridSize];
 
 // Create grid 
@@ -97,9 +97,9 @@ function generateSpellBook(number, positions, target) {
     let spellBook = [];
     let restrictedPositions = [target,...positions];
     let allSpells = [{name: "Speed", target:"self", duration:10},
-                    //{name: "Clarity", target:"self", duration:10},
+                    {name: "Clarity", target:"self", duration:10},
                     {name: "Freeze", target:"opp", duration:10},
-                    //{name: "Blind", target:"opp", duration:10}
+                    {name: "Blind", target:"opp", duration:10}
                 ];
     for(let m=0;m<number;m++) {
         let location = grid[_.random(0,gridSize-1)][_.random(0,gridSize-1)];
