@@ -5,7 +5,7 @@ const _ = require('underscore'); // this library has a nice random function
 
 let current; // Current cell
 let stack = []; //keeps track of the path followed to create the maze
-let gridSize = 5;
+let gridSize = 11;
 let grid = [gridSize];
 
 // Create grid 
@@ -200,7 +200,7 @@ function main() {
     // Just keeping them random might be unfair
     let startPositions = generateStartPositions(); // get startPositions for both players
     let target = generateTarget(startPositions); // get the goal
-    let spellBook = generateSpellBook(8, startPositions, target);
+    let spellBook = generateSpellBook(12, startPositions, target);
     // two objects, one for each player
     return [
         {

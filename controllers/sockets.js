@@ -8,12 +8,12 @@ const id = require('../helpers/id');
 const socketByPlayerID = require('../helpers/socketByPlayerID');
 
 let playersInLobby = 0;
-//let matchMakingInProgress = false;
+let matchMakingInProgress = false;
 
 // currently no way to opt out once you press "play now"
 function joinRandoms() {
-  //if(!matchMakingInProgress) {
-  // matchMakingInProgress=true;
+  if(!matchMakingInProgress) {
+  matchMakingInProgress=true;
     if(lobby.adapter.rooms["randomRoom"]!==undefined) {
       let randoms = Object.keys(lobby.adapter.rooms["randomRoom"].sockets);;
       while(randoms.length>1) {
@@ -28,8 +28,8 @@ function joinRandoms() {
         }
       }
     }
-    //matchMakingInProgress=false;
-  //}
+    matchMakingInProgress=false;
+  }
 }
 
 setInterval(joinRandoms, 2000);
@@ -89,9 +89,13 @@ lobby.on("connection", (socket) => {
       player.on("fire", (shotDetails) => {
         player.broadcast.emit("shotDetails",shotDetails);
       });
+      player.on("reachedTarget", () => {
+        player.broadcast.emit("gg", {message: "Your opponent reached the exit. You lose!"});
+      });
       console.log(`Player ${playerCount} has entered the game`);
       player.emit("setup", gameDetails[playerCount-1]);
       player.on("disconnect", () => {
+        player.broadcast.emit("gg", {message: "Your opponent left the game."});
         console.log(`Player ${playerCount} has exited the game`);
         playerCount-=1;
       });

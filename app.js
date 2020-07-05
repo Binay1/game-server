@@ -7,7 +7,9 @@ const cors = require('cors');
 const app = express();
 
 // Allow access from front-end
-app.use(cors({credentials:true,origin: 'http://localhost:3000'}));
+app.use(cors({credentials:true,
+  //origin: 'http://localhost:3000'
+}));
 // Attach all other middleware
 app.use(logger('dev'));
 app.use(express.json());
