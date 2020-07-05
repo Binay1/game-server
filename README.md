@@ -17,3 +17,4 @@ This is a battle between two wizards stuck in the void between two dimensions. T
 - WASD or Arrow keys for movement
 - Mouse to look around
 - Click to fire spell
+
