@@ -5,7 +5,7 @@ const _ = require('underscore'); // this library has a nice random function
 
 let current; // Current cell
 let stack = []; //keeps track of the path followed to create the maze
-let gridSize = 11;
+let gridSize = 12;
 let grid = [gridSize];
 
 // Create grid 
@@ -74,22 +74,27 @@ function addPaths(extra) {
     }
 }
 
+function distance(position1, position2) {
+    return Math.sqrt(Math.pow(position1.xcoord-position2.xcoord, 2)+Math.pow(position1.zcoord-position2.zcoord, 2));
+}
+
 // Generate start positions for both players
-function generateStartPositions() {
-    let position1 = grid[_.random(0,gridSize-1)][_.random(0,gridSize-1)];
-    let position2 = grid[_.random(0,gridSize-1)][_.random(0,gridSize-1)];
-    while(position2==position1) {
-        position2 = grid[_.random(0,gridSize-1)][_.random(0,gridSize-1)];
+function generateStartPositions(target) {
+    let pos1 = grid[_.random(0,gridSize-1)][_.random(0,gridSize-1)];
+    while(pos1===target || distance(pos1, target) < gridSize/2) {
+        pos1 = grid[_.random(0,gridSize-1)][_.random(0,gridSize-1)];
     }
-    return [position1, position2];
+    let neighbours = pos1.getNeighbours();
+    let pos2 = neighbours[_.random(0, neighbours.length-1)];
+    while(pos2 === undefined || pos2===target) { // don't really need to check it with target but, just to be safe
+        pos2 = neighbours[_.random(0, neighbours.length-1)];
+    }
+    return [pos1, pos2];
 }
 
 // This is the goal. This block will likely be of a different color
-function generateTarget(positions) {
+function generateTarget() {
     let target = grid[_.random(0,gridSize-1)][_.random(0,gridSize-1)];
-    while(target===positions[0]||target===positions[1]) {
-        target = grid[_.random(0,gridSize-1)][_.random(0,gridSize-1)];
-    }
     return target;
 }
 
@@ -99,7 +104,7 @@ function generateSpellBook(number, positions, target) {
     let allSpells = [{name: "Speed", target:"self", duration:10},
                     {name: "Clarity", target:"self", duration:10},
                     {name: "Freeze", target:"opp", duration:10},
-                    {name: "Blind", target:"opp", duration:10}
+                    {name: "Blind", target:"opp", duration:10},
                 ];
     for(let m=0;m<number;m++) {
         let location = grid[_.random(0,gridSize-1)][_.random(0,gridSize-1)];
@@ -128,26 +133,26 @@ function Cell(xcoord,zcoord) {
 
     this.getNeighbours = () => {
         let allNeighbours = [];
-        if(current.xcoord!==0) {
-            allNeighbours[0] = grid[current.xcoord-1][current.zcoord]; // cell above
+        if(this.xcoord!==0) {
+            allNeighbours[0] = grid[this.xcoord-1][this.zcoord]; // cell above
         }
         else {
             allNeighbours[0] = undefined;
         }
-        if(current.zcoord!==gridSize-1) {
-            allNeighbours[1] = grid[current.xcoord][current.zcoord+1]; // cell to right
+        if(this.zcoord!==gridSize-1) {
+            allNeighbours[1] = grid[this.xcoord][this.zcoord+1]; // cell to right
         }
         else {
             allNeighbours[1]=undefined;
         }
-        if(current.xcoord!==gridSize-1) {
-            allNeighbours[2] = grid[current.xcoord+1][current.zcoord]; // cell below
+        if(this.xcoord!==gridSize-1) {
+            allNeighbours[2] = grid[this.xcoord+1][this.zcoord]; // cell below
         }
         else {
             allNeighbours[2]=undefined;
         }
-        if(current.zcoord!==0) {
-            allNeighbours[3] = grid[current.xcoord][current.zcoord-1]; //cell to left
+        if(this.zcoord!==0) {
+            allNeighbours[3] = grid[this.xcoord][this.zcoord-1]; //cell to left
         }
         else {
             allNeighbours[3] = undefined;
@@ -196,10 +201,8 @@ function main() {
         mazify();
     }while(stack.length!==0);
     addPaths(2); // remove a few extra walls for more paths
-    // Note: balancing conditions have to be added to startPositions and target
-    // Just keeping them random might be unfair
-    let startPositions = generateStartPositions(); // get startPositions for both players
-    let target = generateTarget(startPositions); // get the goal
+    let target = generateTarget(); // get the goal
+    let startPositions = generateStartPositions(target); // get startPositions for both players
     let spellBook = generateSpellBook(12, startPositions, target);
     // two objects, one for each player
     return [
