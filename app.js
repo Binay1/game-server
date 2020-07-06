@@ -8,7 +8,7 @@ const app = express();
 
 // Allow access from front-end
 app.use(cors({credentials:true,
-  //origin: 'http://localhost:3000'
+  origin: 'http://192.168.1.6:3000',
 }));
 // Attach all other middleware
 app.use(logger('dev'));
