@@ -86,8 +86,9 @@ lobby.on("connection", (socket) => {
       player.on("spellCross", (spellID) => {
         player.broadcast.emit("removeSpell", spellID);
       });
-      player.on("fire", (shotDetails) => {
+      player.on("fire", (shotDetails, cb) => {
         player.broadcast.emit("shotDetails",shotDetails);
+        cb();
       });
       player.on("reachedTarget", () => {
         player.broadcast.emit("gg", {message: "Your opponent reached the exit. You lose!"});
