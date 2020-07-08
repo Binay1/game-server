@@ -200,7 +200,7 @@ function main() {
     do{
         mazify();
     }while(stack.length!==0);
-    addPaths(2); // remove a few extra walls for more paths
+    addPaths(5); // remove a few extra walls for more paths
     let target = generateTarget(); // get the goal
     let startPositions = generateStartPositions(target); // get startPositions for both players
     let spellBook = generateSpellBook(12, startPositions, target);
