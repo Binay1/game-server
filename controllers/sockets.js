@@ -49,6 +49,10 @@ lobby.on("connection", (socket) => {
     socket.join("randomRoom");
   });
 
+  socket.on("leaveRoom", () => {
+    socket.leave("randomRoom");
+  });
+
   // Ask a friend to play
   socket.on("reqFriend", (friendID) => {
     let friendSocketID = socketByPlayerID(lobby, friendID);
