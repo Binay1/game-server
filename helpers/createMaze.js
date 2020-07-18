@@ -100,11 +100,12 @@ function generateTarget() {
 
 function generateSpellBook(number, positions, target) {
     let spellBook = [];
+    let initialSpells = [];
     let restrictedPositions = [target,...positions];
     let allSpells = [{name: "Speed", target:"self", duration:10},
-                    {name: "Clarity", target:"self", duration:10},
-                    {name: "Freeze", target:"opp", duration:10},
-                    {name: "Blind", target:"opp", duration:10},
+                    {name: "Clarity", target:"self", duration:7},
+                    {name: "Freeze", target:"opp", duration:4},
+                    {name: "Blind", target:"opp", duration:7},
                 ];
     for(let m=0;m<number;m++) {
         let location = grid[_.random(0,gridSize-1)][_.random(0,gridSize-1)];
@@ -120,7 +121,15 @@ function generateSpellBook(number, positions, target) {
             position: location,
         };
     }
-    return spellBook;
+    for(let j=0;j<2;j++) {
+        let randomSpell = allSpells[_.random(0,allSpells.length-1)];
+        initialSpells[j] = {
+            spellName: randomSpell.name,
+            spellTarget: randomSpell.target,
+            spellDuration: randomSpell.duration,
+        };
+    }
+    return [spellBook, initialSpells];
 }
 
 // Cell constructor/definition/everything 
@@ -203,7 +212,7 @@ function main() {
     addPaths(5); // remove a few extra walls for more paths
     let target = generateTarget(); // get the goal
     let startPositions = generateStartPositions(target); // get startPositions for both players
-    let spellBook = generateSpellBook(12, startPositions, target);
+    let [spellBook, initialSpells] = generateSpellBook(12, startPositions, target);
     // two objects, one for each player
     return [
         {
@@ -211,6 +220,7 @@ function main() {
             target: target,
             maze: grid,
             opponentPosition: startPositions[1],
+            initialSpell: initialSpells[0],
             spellBook: spellBook,
         },
         {
@@ -218,6 +228,7 @@ function main() {
             target: target,
             maze: grid,
             opponentPosition: startPositions[0],
+            initialSpell: initialSpells[1],
             spellBook: spellBook,
         }
     ];

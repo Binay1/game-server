@@ -64,48 +64,11 @@ lobby.on("connection", (socket) => {
       lobby.to(friendSocketID).emit("reqPlay",socket.playerID);
       let friendSocket = lobby.connected[friendSocketID];
       friendSocket.on("reject",  () => {
-        socket.emit("message", "Your challenge has been rejected")
+        socket.emit("message", "Your challenge has been rejected");
       });
       friendSocket.on("accept", () => createGame(socket, friendSocket));
     }
   });
-
-  createGame = (socket, opponent) => {
-    const gameID = uuid.v4();
-    const gameurl = "/game/" + encodeURIComponent(gameID);
-    let gameDetails = createMaze();
-    socket.emit("enterGame", {redirectTo: gameurl});
-    opponent.emit("enterGame", {redirectTo: gameurl});
-    const game = io.of(gameurl);
-    let playerCount = 0;
-    game.on("connection", (player) =>{
-      playerCount+=1;
-      if(playerCount>2) {
-        playerCount-=1;
-        player.disconnect();
-      }
-      player.on("position", (newPos) => {
-        player.broadcast.emit("opponentPosition", newPos);
-      });
-      player.on("spellCross", (spellID) => {
-        player.broadcast.emit("removeSpell", spellID);
-      });
-      player.on("fire", (shotDetails, cb) => {
-        player.broadcast.emit("shotDetails",shotDetails);
-        cb();
-      });
-      player.on("reachedTarget", () => {
-        player.broadcast.emit("gg", {message: "Your opponent reached the exit. You lose!"});
-      });
-      console.log(`Player ${playerCount} has entered the game`);
-      player.emit("setup", gameDetails[playerCount-1]);
-      player.on("disconnect", () => {
-        player.broadcast.emit("gg", {message: "Your opponent left the game."});
-        console.log(`Player ${playerCount} has exited the game`);
-        playerCount-=1;
-      });
-    });
-  }
 
   socket.on("disconnect", () => {
     playersInLobby-=1;
@@ -114,5 +77,52 @@ lobby.on("connection", (socket) => {
     lobby.emit("playerUpdate", {"playersInLobby":playersInLobby});
   });
 });
+
+createGame = (socket, opponent) => {
+  const gameID = uuid.v4();
+  const gameurl = "/game/" + encodeURIComponent(gameID);
+  let gameDetails = createMaze();
+  socket.emit("enterGame", {redirectTo: gameurl});
+  opponent.emit("enterGame", {redirectTo: gameurl});
+  const game = io.of(gameurl);
+  let playerCount = 0;
+  game.on("connection", (player) =>{
+    playerCount+=1;
+    if(playerCount>2) {
+      playerCount-=1;
+      player.disconnect();
+    }
+    console.log(`Player ${playerCount} has entered the game`);
+    player.emit("setup", gameDetails[playerCount-1]);
+    player.on("position", (newPos) => {
+      player.broadcast.emit("opponentPosition", newPos);
+    });
+    player.on("spellCross", (spellID) => {
+      player.broadcast.emit("removeSpell", spellID);
+    });
+    player.on("fire", (shotDetails, cb) => {
+      player.broadcast.emit("shotDetails",shotDetails);
+      cb();
+    });
+    player.on("reachedTarget", () => {
+      player.broadcast.emit("gg", {message: "Your opponent reached the exit. You lose!"});
+    });
+    player.on("rematch", ()=> {
+      player.broadcast.emit("reqPlay");
+    });
+    player.on("accept", ()=> {
+      let players = Object.keys(game.connected);
+      createGame(game.connected[players[0]], game.connected[players[1]]);
+    });
+    player.on("reject", () => {
+      player.emit("message", "Your challenge has been rejected");
+    });
+    player.on("disconnect", () => {
+      player.broadcast.emit("gg", {message: "Your opponent left the game."});
+      console.log(`Player ${playerCount} has exited the game`);
+      playerCount-=1;
+    });
+  });
+}
 
 module.exports = io;
