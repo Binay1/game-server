@@ -1,8 +1,8 @@
 # Maze Runner (server)
 - This repo contains all the server-side code for the game (dubbed Maze Runner) that I am creating.
 - This repo is meant to be used in conjunction with the game-client repo.
-- All the main features of the application have been completed with only game-balnce changes, minor upgrades left
-- The game is going to be multiplayer and that is achieved through the use of socket.io
+- All the main features of the application have been completed.
+- The game is multiplayer (two players to be precise) and that is achieved through the use of socket.io
 
 # Instructions for use
 - A production version of the game is available at https://mazernr.herokuapp.com so it saves you the hassle of setting everything up. If you would like to use the dev version locally, follow the instructions given below
